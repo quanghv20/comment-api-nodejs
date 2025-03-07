@@ -9,6 +9,18 @@ const db = require("../config/db");
  */
 const CommentHistoryModel = {
   /** GET */
+  findAll: async () => {
+    try {
+      const [results] = await db
+        .promise()
+        .query("SELECT * FROM comments_history");
+
+      return results;
+    } catch (error) {
+      throw new Error(error);
+    }
+  },
+
   findByCid: async (cid) => {
     try {
       const [results] = await db

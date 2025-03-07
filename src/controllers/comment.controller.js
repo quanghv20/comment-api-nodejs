@@ -174,6 +174,23 @@ exports.publishComment = async (req, res) => {
   try {
     await CommentModel.publish(cid);
 
+    const commentOnDB = await CommentModel.findById(cid);
+
+    if (!commentOnDB || !isNull(commentOnDB.deleted_at)) {
+      return handleResponseSuccess(res, 404, "Record not found!");
+    }
+
+    const { uid, content } = commentOnDB;
+    const newCmtHistory = {
+      cid,
+      uid,
+      oldContent: content,
+      updatedAt: new Date(),
+      status: 1,
+    };
+
+    await CommentHistoryModel.create(newCmtHistory);
+
     return handleResponseSuccess(
       res,
       200,
@@ -188,6 +205,23 @@ exports.unpublishComment = async (req, res) => {
   const { cid } = req.params;
   try {
     await CommentModel.unpublish(cid);
+
+    const commentOnDB = await CommentModel.findById(cid);
+
+    if (!commentOnDB || !isNull(commentOnDB.deleted_at)) {
+      return handleResponseSuccess(res, 404, "Record not found!");
+    }
+
+    const { uid, content } = commentOnDB;
+    const newCmtHistory = {
+      cid,
+      uid,
+      oldContent: content,
+      updatedAt: new Date(),
+      status: 0,
+    };
+
+    await CommentHistoryModel.create(newCmtHistory);
 
     return handleResponseSuccess(
       res,
@@ -215,7 +249,7 @@ exports.updateComment = async (req, res) => {
       oldContent: commentOnDB.content,
       newContent: commentUpdate.content,
       updatedAt: new Date(),
-      isDeleted: commentOnDB.deleted_at ? true : false,
+      status: 2,
     };
 
     await CommentModel.update(commentUpdate);
@@ -295,8 +329,6 @@ exports.softDeleteComment = async (req, res) => {
 
   try {
     const commentOnDB = await CommentModel.findById(cid);
-
-    console.log("commentOnDB: ", commentOnDB);
 
     if (!commentOnDB || !isNull(commentOnDB.deleted_at)) {
       return handleResponseSuccess(res, 404, "Record not found!");
